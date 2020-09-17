@@ -1,6 +1,6 @@
 ## Oswap-stats-api
 
-This o<sub>byte</sub> light node explores the DAG and provides API endpoints giving information about exchanges happening on Oswap.
+This O<sub>byte</sub> light node explores the DAG and provides API endpoints giving information about trades happening on Oswap.
 
 
 #### Installation
@@ -9,7 +9,7 @@ Install node.js 8+, clone the repository, then
 
 `npm install`
 
-By default the API is accessible at `http://localhost:4100` (`http://localhost:4101` for testnet). You may want to setup a reverse proxy like Nginx to make it accessible on a public domain.
+By default the API is accessible at `http://localhost:4100` (`http://localhost:4101` for testnet). You may want to setup a reverse proxy like Nginx to make it accessible on a public url.
 
 #### Run
 
@@ -19,7 +19,7 @@ By default the API is accessible at `http://localhost:4100` (`http://localhost:4
 #### Endpoints
 
 
-- *api/v1/assets*
+- */api/v1/assets*
 
 Return all assets having trades listed. To be noted that only assets having a symbol registered on [Obyte decentralized registry](https://github.com/byteball/token-registry-ui) will appear.
 
@@ -43,7 +43,8 @@ Return all assets having trades listed. To be noted that only assets having a sy
 ```
 
 
-- *api/v1/summary*
+
+- */api/v1/summary*
 
 Return an array of all traded pairs with their characteristics and statistics for last 24 hours
 
@@ -62,7 +63,9 @@ Return an array of all traded pairs with their characteristics and statistics fo
 }]
 ```
 
-- *api/v1/tickers*
+
+
+- */api/v1/tickers*
 
 Return an associative array  of all tickers sorted by markets
 
@@ -83,12 +86,15 @@ Return an associative array  of all tickers sorted by markets
 }
 ```
 
-- *api/v1/ticker/<market_name>*
+
+
+- */api/v1/ticker/<market_name>*
 
 Return a ticker for a specific market
 
 
-- *api/v1/trades/<market_name>*
+
+- */api/v1/trades/<market_name>*
 
 Return an array of last 24h trades for a specific market
 
