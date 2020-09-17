@@ -123,7 +123,7 @@ async function refreshTrades(base, quote){
 	WHERE timestamp > date('now' ,'-1 days') AND quote=? AND base=? ORDER BY timestamp DESC",[quote, base]);
 	rows.forEach(function(row){
 		trades.push({
-			market_pair: ticker.base_symbol + getMarketNameSeparator() + ticker.quote_symbol,
+			market_name: ticker.base_symbol + getMarketNameSeparator() + ticker.quote_symbol,
 			price: row.price * getDecimalsPriceCoefficient(base, quote),
 			base_volume: row.base_volume / 10 ** assocAssets[base].decimals,
 			quote_volume: row.quote_volume / 10 ** assocAssets[quote].decimals,

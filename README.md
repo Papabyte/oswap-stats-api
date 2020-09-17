@@ -100,7 +100,7 @@ Return an array of last 24h trades for a specific market
 
 ```json
 [{
-  "market_pair": "LAMBO-GBYTE",
+  "market_name": "LAMBO-GBYTE",
   "price": 3.2046504862368113,
   "base_volume": 0.031204651,
   "quote_volume": 0.1,
