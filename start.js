@@ -11,7 +11,7 @@ const api = require('./api.js');
 
 lightWallet.setLightVendorHost(conf.hub);
 
-eventBus.on('connected', function(ws){
+eventBus.once('connected', function(ws){
 	network.initWitnessesIfNecessary(ws, start);
 });
 
@@ -154,20 +154,18 @@ function getAmountToAa(objTriggerUnit, aa_address, asset = 'base'){
 }
 
 
+function addWatchedAas(){
+	network.addLightWatchedAa(conf.oswap_base_aa, null, console.log);
+	network.addLightWatchedAa(conf.token_registry_aa_address, null, console.log);
+}
+
 async function start(){
 	await sqlite_tables.create();
 	await discoverOswapAas()
-	network.addLightWatchedAa(conf.oswap_base_aa, null, err => {
-		if (err)
-			throw Error(err);
-	});
-	network.addLightWatchedAa(conf.token_registry_aa_address, null, err => {
-		if (err)
-			throw Error(err);
-	});
-
+	addWatchedAas();
+	eventBus.on('connected', addWatchedAas);
+	lightWallet.refreshLightClientHistory();
 	api.start();
-	setInterval(lightWallet.refreshLightClientHistory, 60*1000);
 }
 
 
@@ -189,7 +187,7 @@ function discoverOswapAas(){
 
 async function saveAndwatchOswapAa(objAa){
 	return new Promise(async function(resolve){
-		await	saveOswapAa(objAa);
+		await saveOswapAa(objAa);
 		walletGeneral.addWatchedAddress(objAa.address, resolve);
 	});
 }
@@ -226,7 +224,6 @@ async function saveSymbolForAsset(asset){
 }
 
 async function refreshSymbols(){
-	console.log("refreshSymbols");
 	const rows = await db.query("SELECT swap_asset AS asset FROM oswap_aas UNION SELECT DISTINCT asset_0 AS asset FROM oswap_aas \n\
 	UNION SELECT asset_1 AS asset FROM oswap_aas");
 	for (var i; i < rows.length; i++)
@@ -259,9 +256,14 @@ function handleJustsaying(ws, subject, body) {
 		case 'light/aa_definition':
 			onAADefinition(body);
 		break;
+
 		case 'light/aa_response':
 			if (body.aa_address == conf.token_registry_aa_address)
-			refreshSymbols();
+				refreshSymbols();
+		break;
+
+		case 'light/have_updates':
+			lightWallet.refreshLightClientHistory();
 		break;
 	}
 }
