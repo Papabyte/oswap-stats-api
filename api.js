@@ -185,6 +185,9 @@ async function start(){
 
 	await initCaches();
 
+	app.get('/', async function(request, response){
+		return response.send(getLandingPage());
+	});
 
 	app.get('/api/v1/assets', async function(request, response){
 		await waitUntilRefreshFinished();
@@ -238,6 +241,19 @@ function waitUntilRefreshFinished(){
 				waitUntilRefreshFinished().then(resolve);
 			}, 50);
 	})
+}
+
+function getLandingPage(){
+	var html = '<html><ul>';
+	html +='<li><a href="/api/v1/assets">assets</a></li>';
+	html +='<li><a href="/api/v1/summary">summary</a></li>';
+	html +='<li><a href="/api/v1/tickers">tickers</a></li>';
+	for (var key in assocTickersByMarketNames)
+		html +='<li><a href="/api/v1/ticker/'+ key + '">ticker ' + key + ' </a></li>';
+	for (var key in assocTickersByMarketNames)
+		html +='<li><a href="/api/v1/trades/'+ key + '">trades ' + key + ' </a></li>';
+	html += '</ul></html>';
+	return html;
 }
 
 
