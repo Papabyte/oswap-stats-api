@@ -159,6 +159,7 @@ function addWatchedAas(){
 	network.addLightWatchedAa(conf.token_registry_aa_address, null, console.log);
 }
 
+
 async function start(){
 	await sqlite_tables.create();
 	await discoverOswapAas()
@@ -263,7 +264,7 @@ function handleJustsaying(ws, subject, body) {
 		break;
 
 		case 'light/have_updates':
-			lightWallet.refreshLightClientHistory();
+			lightWallet.refreshLightClientHistory(); // needed
 		break;
 	}
 }
