@@ -1,6 +1,7 @@
 const conf = require('ocore/conf.js');
 const db = require('ocore/db.js');
 const express = require('express')
+const cors = require('cors');
 
 const assocTickersByAssets = {};
 const assocTickersByMarketNames = {};
@@ -288,6 +289,7 @@ async function start(){
 	
 	const app = express();
 	const server = require('http').Server(app);
+	app.use(cors());
 
 	await initCaches();
 
