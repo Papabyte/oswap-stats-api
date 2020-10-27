@@ -2,6 +2,7 @@ const conf = require('ocore/conf.js');
 const db = require('ocore/db.js');
 const express = require('express')
 const cors = require('cors');
+const mutex = require('ocore/mutex.js');
 
 const assocTickersByAssets = {};
 const assocTickersByMarketNames = {};
@@ -21,7 +22,7 @@ const unifiedCryptoAssetIdsByAssets = {
 
 var bRefreshing = false;
 
-async function initCaches(){
+async function initMarkets(){
 	await initAssetsCache();
 	const rows = await db.query('SELECT DISTINCT base,quote FROM trades');
 	for (var i=0; i < rows.length; i++){
@@ -95,6 +96,7 @@ async function createTicker(base, quote){
 }
 
 async function refreshMarket(base, quote){
+	const unlock = await mutex.lockOrSkip(['refresh_' + base + '-' + quote]);
 	bRefreshing = true;
 	await refreshAsset(base);
 	await refreshAsset(quote);
@@ -105,6 +107,7 @@ async function refreshMarket(base, quote){
 	} else 
 		console.log("symbol missing");
 	bRefreshing = false;
+	unlock();
 }
 
 async function refreshAsset(asset){
@@ -291,7 +294,8 @@ async function start(){
 	const server = require('http').Server(app);
 	app.use(cors());
 
-	await initCaches();
+	await initMarkets();
+	setInterval(initMarkets, 3600 * 1000); // compute last hourly candle even when no trade happened
 
 	app.get('/', async function(request, response){
 		return response.send(getLandingPage());
@@ -417,5 +421,4 @@ function getLandingPage(){
 
 exports.start = start;
 exports.refreshMarket = refreshMarket;
-exports.initCaches = initCaches;
-exports.initAssetsCache = initAssetsCache;
+exports.initMarkets = initMarkets;

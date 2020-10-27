@@ -15,6 +15,7 @@ eventBus.once('connected', function(ws){
 	network.initWitnessesIfNecessary(ws, start);
 });
 
+const bounce_fees = 10000;
 
 async function treatResponseFromOswapAA(objResponse, objInfos){
 
@@ -34,23 +35,26 @@ async function treatResponseFromOswapAA(objResponse, objInfos){
 			throw Error('response unit not found ' + objResponse.trigger_unit);
 
 		const timestamp = new Date(objResponseUnit.timestamp * 1000).toISOString();
-		const asset0_amount = getAmountToAa(objTriggerUnit, oswapAaAddress, asset0); 
-		const asset1_amount = getAmountToAa(objTriggerUnit, oswapAaAddress, asset1); 
-	
-		const oswap_asset_amount = objResponse.response.responseVars.asset_amount;
+		var asset0_amount = getAmountToAa(objTriggerUnit, oswapAaAddress, asset0);
+		var asset1_amount = getAmountToAa(objTriggerUnit, oswapAaAddress, asset1); 
+		if (asset0_amount > 0 && asset1 == 'base' && asset1_amount == bounce_fees)
+			asset1_amount -= bounce_fees;
+		if (asset1_amount > 0 && asset0 == 'base' && asset0_amount == bounce_fees)
+			asset0_amount -= bounce_fees;
 
+		const oswap_asset_amount = objResponse.response.responseVars.asset_amount;
 
 		const oswapAaVars = await getStateVars(oswapAaAddress);
 		const supply = oswapAaVars.supply;
 
 		if (asset0_amount > 0){
 			await db.query("INSERT INTO trades (response_unit, base, quote, base_qty, quote_qty, type, timestamp) VALUES (?,?,?,?,?,?,?)", 
-			[objResponse.response_unit, asset0, oswap_asset, asset0_amount, oswap_asset_amount / 2, 'sell', timestamp]);
+			[objResponse.response_unit, asset0, oswap_asset, asset0_amount, asset1_amount > 0 ? oswap_asset_amount / 2 : oswap_asset_amount, 'sell', timestamp]);
 			api.refreshMarket(asset0, oswap_asset);
 		}
 		if (asset1_amount > 0){
 			await db.query("INSERT INTO trades (response_unit, base, quote, base_qty, quote_qty, type, timestamp,indice) VALUES (?,?,?,?,?,?,?,1)", 
-			[objResponse.response_unit, asset1, oswap_asset, asset1_amount, oswap_asset_amount / 2, 'sell', timestamp]);
+			[objResponse.response_unit, asset1, oswap_asset, asset1_amount, asset0_amount > 0 ? oswap_asset_amount / 2 : oswap_asset_amount, 'sell', timestamp]);
 			api.refreshMarket(asset1, oswap_asset);
 		}
 		await saveSupplyForAsset(oswap_asset, supply);
@@ -210,7 +214,7 @@ async function saveSymbolForAsset(asset){
 		symbol = registryVars['a2s_' + asset];
 		decimals = registryVars['decimals_' + current_desc];
 		description = registryVars['desc_' + current_desc];
-		if (!symbol || !decimals){
+		if (!symbol || typeof decimals !== 'number'){
 			console.log('asset ' + asset + ' not found in registry');
 			await db.query("DELETE FROM oswap_assets WHERE asset=?", [asset]);
 			return;
@@ -227,9 +231,9 @@ async function saveSymbolForAsset(asset){
 async function refreshSymbols(){
 	const rows = await db.query("SELECT swap_asset AS asset FROM oswap_aas UNION SELECT DISTINCT asset_0 AS asset FROM oswap_aas \n\
 	UNION SELECT asset_1 AS asset FROM oswap_aas");
-	for (var i; i < rows.length; i++)
+	for (var i=0; i < rows.length; i++)
 		await saveSymbolForAsset(rows[i].asset);
-	api.initAssetsCache();
+	api.initMarkets();
 }
 
 
